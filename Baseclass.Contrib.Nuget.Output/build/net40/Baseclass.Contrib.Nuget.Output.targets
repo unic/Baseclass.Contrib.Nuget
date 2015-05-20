@@ -4,15 +4,17 @@
   <!-- ============================================================ -->
   <!-- Build targets                                                -->
   <!-- ============================================================ -->
-  <!-- 
+  <!--
   Is run once after build, checks if the project's nuget package's .nuspec depends on Baseclass.Contrib.Nuget.Output and copies everything which is in the
   output folder to the builds OutDir.
   -->
   <Target Name="CopyToOutput" AfterTargets="Compile" DependsOnTargets="CollectNugetOutputFiles">
-    <Copy SourceFiles="@(NugetOutputFiles)" DestinationFiles="@(NugetOutputFiles->'$(OutDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Include="@(NugetOutputFiles)"></ReferenceCopyLocalPaths>
+    </ItemGroup>
   </Target>
 
-  <!-- 
+  <!--
   Is run once after clean, delete all files that match files collected by the CollectNugetOutputFiles task.
   -->
   <Target Name="CleanOutput" AfterTargets="Clean" DependsOnTargets="CollectNugetOutputFiles">
@@ -33,7 +35,7 @@
   <!-- ============================================================ -->
   <!-- Web publication targets                                      -->
   <!-- ============================================================ -->
-  
+
   <PropertyGroup>
     <PipelineCollectFilesPhaseDependsOn>
     $(PipelineCollectFilesPhaseDependsOn);
@@ -55,7 +57,7 @@
   <!-- ============================================================ -->
   <!-- Common targets                                               -->
   <!-- ============================================================ -->
-  
+
   <ItemGroup>
     <NupkgFiles Include="$(MSBuildThisFileDirectory)\..\..\..\*\*.nupkg"/>
   </ItemGroup>
@@ -63,26 +65,26 @@
   <ItemGroup>
     <PackageFiles Include="$(MSBuildProjectDirectory)\packages.config"/>
   </ItemGroup>
-  
+
   <!--
   Is run once to compute the NugetOutputFiles item from the NuGet dependencies of the project
   -->
   <Target Name="CollectNugetOutputFiles">
     <Message Text="Collecting NuGet output files for $(MSBuildProjectName):" />
-    
+
     <PackageFilter PackageConfigs="@(PackageFiles)" NugetPackages="@(NupkgFiles)">
       <Output ItemName="FilteredNugetPackages" TaskParameter="Result" />
     </PackageFilter>
 
     <Message Text="@(FilteredNugetPackages->'%(RecursiveDir)%(Filename)%(Extension)', '%0D%0A')" />
-    <Message Text="Total filtered packages : @(FilteredNugetPackages->Count())" /> 
-    
+    <Message Text="Total filtered packages : @(FilteredNugetPackages->Count())" />
+
     <ItemGroup>
       <NugetOutputFiles Include="%(FilteredNugetPackages.RootDir)%(FilteredNugetPackages.Directory)\output\**\*.*" />
     </ItemGroup>
-    
+
     <Message Text="@(NugetOutputFiles->'%(RecursiveDir)%(Filename)%(Extension)', '%0D%0A')" />
-    <Message Text="Total files collected : @(NugetOutputFiles->Count())" /> 
+    <Message Text="Total files collected : @(NugetOutputFiles->Count())" />
   </Target>
 
   <!--
@@ -94,7 +96,7 @@
       <NugetPackages ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
       <Result ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
     </ParameterGroup>
-    <Task>        
+    <Task>
       <Reference Include="System.Xml"/>
       <Reference Include="System.Xml.Linq"/>
       <Reference Include="WindowsBase" />
@@ -106,10 +108,10 @@
       <Using Namespace="System.Threading" />
       <Using Namespace="System.Xml" />
       <Code Type="Fragment" Language="cs">
-        <![CDATA[                
+        <![CDATA[
             var usedPackages = new HashSet<string>(); // packaged used by the project
             try
-            {                
+            {
                 foreach (var packageConfig in PackageConfigs)
                 {
                     var path = packageConfig.GetMetadata("FullPath");
@@ -143,7 +145,7 @@
             try
             {
                 foreach (var nugetPackage in NugetPackages)
-                {                    
+                {
                     var path = nugetPackage.GetMetadata("FullPath");
                     var parts = path.Split(Path.DirectorySeparatorChar);
                     usedNugetPackages.AddRange(from part in parts where usedPackages.Contains(part) select nugetPackage);
@@ -172,7 +174,7 @@
                     try
                     {
                       mut.WaitOne();
-                      
+
                       if (!File.Exists(nugetSpec))
                       {
                           // unpack the nuget spec file from the package
