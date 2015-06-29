@@ -96,7 +96,7 @@
   <PropertyGroup Condition=" '$(MSBuildToolsVersion)' != '14.0' ">
     <BuildTaskPath>$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll</BuildTaskPath>
   </PropertyGroup>
-  
+
   <UsingTask TaskName="PackageFilter" TaskFactory="CodeTaskFactory" AssemblyFile="$(BuildTaskPath)">
     <ParameterGroup>
       <PackageConfigs ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
